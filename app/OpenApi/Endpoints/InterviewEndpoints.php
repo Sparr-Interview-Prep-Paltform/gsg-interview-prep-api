@@ -7,6 +7,34 @@ use OpenApi\Spec as OA;
 
 final class InterviewEndpoints
 {
+    #[OA\Operation\Get(
+        path: '/api/v1/interviews',
+        operationId: 'listInterviews',
+        tags: ['Interviews'],
+        summary: 'List your interviews',
+        description: 'Returns only the authenticated user\'s interviews in all statuses, newest ID first, with 15 records per page.',
+        parameters: [
+            new OA\Parameter\Query(name: 'page', description: 'Page number.', schema: new OA\Schema(type: 'integer', minimum: 1, default: 1)),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated interviews. The data array is empty when the user has no interviews.',
+                content: new OA\MediaType\Json(
+                    type: 'object',
+                    required: ['data', 'links', 'meta'],
+                    properties: [
+                        'data' => new OA\Schema(type: 'array', items: new OA\Schema(ref: '#/components/schemas/Interview')),
+                        'links' => new OA\Schema(ref: '#/components/schemas/PaginationLinks'),
+                        'meta' => new OA\Schema(ref: '#/components/schemas/PaginationMeta'),
+                    ],
+                ),
+            ),
+            new OA\Response(response: 401, description: 'Missing, invalid, or revoked Bearer token.', content: new OA\MediaType\Json(ref: '#/components/schemas/UnauthenticatedError')),
+        ],
+    )]
+    public function index(): void {}
+
     #[OA\Operation\Post(
         path: '/api/v1/interviews',
         operationId: 'createInterview',

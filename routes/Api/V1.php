@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     )->name('api.v1.gap-analysis');
 
     // Interviews
+    Route::get('/interviews', [InterviewController::class, 'index'])->name('api.v1.interviews.index');
     Route::post('/interviews', [InterviewController::class, 'store'])->name('api.v1.interviews.store');
 
     // Interview Question
