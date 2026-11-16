@@ -15,7 +15,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class InterviewController extends Controller
 {
@@ -83,8 +85,23 @@ class InterviewController extends Controller
 
         // Trigger questions generation job
         if ($interview->wasRecentlyCreated) {
-            ProcessInterviewQuestion::dispatch($interview->id)->afterCommit();
+            DB::afterCommit(function () use ($interview): void {
+                try {
+                    ProcessInterviewQuestion::dispatch($interview->id);
+                } catch (Throwable $exception) {
+                    $interview->newQuery()->whereKey($interview->id)->where('ai_run', 0)->where('status', 'preparing')->update([
+                        'status' => 'failed',
+                        'ai_error_code' => 'queue_unavailable',
+                    ]);
+                    Log::warning('AI processing could not be queued.', [
+                        'record_id' => $interview->id,
+                        'exception_type' => $exception::class,
+                    ]);
+                }
+            });
+            $interview->refresh();
         }
+
         return (new InterviewResource($interview))->response()
             ->setStatusCode($interview->wasRecentlyCreated ? 201 : 200);
     }
