@@ -113,10 +113,10 @@ class GenerateInterviewReport implements ShouldBeUnique, ShouldQueue
             }
 
             $lockedReport->fill([
-                'summary' => $aiResult['summary'],
+                'summary' => $aiResult['interview_summary']['summary'],
                 'improvement_areas' => $aiResult['improvement_areas'],
-                'dimensions' => $aiResult['dimensions'],
-                'discrepancy_flag' => $aiResult['discrepancy_flag'],
+                'dimensions' => $aiResult['dimension_scores'],
+                'discrepancy_flag' => $aiResult['discrepancy_flags'],
                 'status' => ReportStatus::COMPLETED,
             ]);
 

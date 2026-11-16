@@ -41,7 +41,7 @@ class PythonInterviewReportService
             }
 
             return [
-                'question_id' => $question->id,
+                'question_id' => $question->sequence_number,
                 'sequence_number' => $question->sequence_number,
                 'question' => $question->text,
                 'answer' => $answer->answer,
@@ -97,10 +97,11 @@ class PythonInterviewReportService
 
         // validate response
         $validator = Validator::make($data, [
-            'summary' => ['required', 'string'],
-            'improvement_areas' => ['required', 'array'],
-            'dimensions' => ['required', 'array'],
-            'discrepancy_flag' => ['present', 'array'],
+            'interview_summary' => ['present', 'array'],
+            'interview_summary.summary' => ['required', 'string'],
+            'improvement_areas' => ['present', 'array'],
+            'dimension_scores' => ['present', 'array'],
+            'discrepancy_flags' => ['present', 'array'],
         ]);
 
         if ($validator->fails()) {
