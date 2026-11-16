@@ -42,6 +42,14 @@ class InterviewAnswerController extends Controller
                 'This interview is not accepting answers.'
             );
 
+            $nextQuestion = $interview->questions()->whereDoesntHave('answer')->first();
+
+            abort_unless(
+                $nextQuestion !== null && $nextQuestion->id === $question->id,
+                409,
+                'Please answer the current question before moving to the next one.'
+            );
+
             $answer = $question->answer()->create([
                 'answer' => $validated['answer'],
             ]);
