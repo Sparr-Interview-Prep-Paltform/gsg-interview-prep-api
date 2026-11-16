@@ -50,6 +50,10 @@ class ProcessJobDescription implements ShouldQueue
             ->select(['id', 'parsing_status', 'description'])
             ->find($this->jobDescriptionId);
 
+        if ($job === null) {
+            return;
+        }
+
         if ($job->parsing_status === ParsingStatus::COMPLETED) {
             return;
         }
@@ -110,7 +114,7 @@ class ProcessJobDescription implements ShouldQueue
 
     public function middleware(): array
     {
-        return [(new WithoutOverlapping('JobDescription:'.$this->jobDescriptionId))
+        return [(new WithoutOverlapping('JobDescription:' . $this->jobDescriptionId))
             ->releaseAfter(5)->expireAfter($this->timeout + 5)];
     }
 
