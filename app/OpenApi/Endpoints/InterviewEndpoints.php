@@ -7,6 +7,34 @@ use OpenApi\Spec as OA;
 
 final class InterviewEndpoints
 {
+    #[OA\Operation\Get(
+        path: '/api/v1/interviews',
+        operationId: 'listInterviews',
+        tags: ['Interviews'],
+        summary: 'List your interviews',
+        description: 'Returns only the authenticated user\'s interviews in all statuses, newest ID first, with 15 records per page.',
+        parameters: [
+            new OA\Parameter\Query(name: 'page', description: 'Page number.', schema: new OA\Schema(type: 'integer', minimum: 1, default: 1)),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Paginated interviews. The data array is empty when the user has no interviews.',
+                content: new OA\MediaType\Json(
+                    type: 'object',
+                    required: ['data', 'links', 'meta'],
+                    properties: [
+                        'data' => new OA\Schema(type: 'array', items: new OA\Schema(ref: '#/components/schemas/Interview')),
+                        'links' => new OA\Schema(ref: '#/components/schemas/PaginationLinks'),
+                        'meta' => new OA\Schema(ref: '#/components/schemas/PaginationMeta'),
+                    ],
+                ),
+            ),
+            new OA\Response(response: 401, description: 'Missing, invalid, or revoked Bearer token.', content: new OA\MediaType\Json(ref: '#/components/schemas/UnauthenticatedError')),
+        ],
+    )]
+    public function index(): void {}
+
     #[OA\Operation\Post(
         path: '/api/v1/interviews',
         operationId: 'createInterview',
@@ -36,6 +64,7 @@ final class InterviewEndpoints
                         'resume_id' => 12,
                         'job_description_id' => 34,
                         'status' => 'preparing',
+                        'ai_failure' => null,
                         'total_questions' => Interview::INITIAL_QUESTION_COUNT,
                         'started_at' => null,
                         'completed_at' => null,
@@ -84,7 +113,7 @@ final class InterviewEndpoints
         operationId: 'submitInterviewAnswer',
         tags: ['Interviews'],
         summary: 'Submit an interview answer',
-        description: 'Saves one answer for a question in an owned interview and queues its evaluation after saving. The client can show the next question as soon as the answer is saved. The interview becomes completed when all answers are saved, even if evaluations are still running.',
+        description: 'Saves one answer for a question in an owned interview and queues its evaluation after saving. The client can show the next question as soon as the answer is saved. The interview becomes completed when all answers are saved, even if evaluations are still running. A failed evaluation exposes ai_failure; use the answer retry endpoint instead of resubmitting the same answer.',
         parameters: [
             new OA\Parameter\Path(name: 'interview', description: 'Interview ID.', schema: new OA\Schema(type: 'integer'), example: 15),
             new OA\Parameter\Path(name: 'question', description: 'Question ID from the interview question list.', schema: new OA\Schema(type: 'integer'), example: 42),
@@ -105,7 +134,7 @@ final class InterviewEndpoints
                 description: 'The same answer was already saved. Returns the existing answer ID and its current evaluation status without queuing another evaluation.',
                 content: new OA\MediaType\Json(
                     ref: '#/components/schemas/InterviewAnswerSubmission',
-                    example: ['data' => ['answer_id' => 101, 'evaluation_status' => 'completed']],
+                    example: ['data' => ['answer_id' => 101, 'evaluation_status' => 'completed', 'ai_failure' => null]],
                 ),
             ),
             new OA\Response(
@@ -113,7 +142,7 @@ final class InterviewEndpoints
                 description: 'Answer saved. Evaluation normally starts in the pending state. If queue dispatch fails, the saved answer is returned with a failed evaluation status.',
                 content: new OA\MediaType\Json(
                     ref: '#/components/schemas/InterviewAnswerSubmission',
-                    example: ['data' => ['answer_id' => 101, 'evaluation_status' => 'pending']],
+                    example: ['data' => ['answer_id' => 101, 'evaluation_status' => 'pending', 'ai_failure' => null]],
                 ),
             ),
             new OA\Response(response: 401, description: 'Missing, invalid, or revoked Bearer token.', content: new OA\MediaType\Json(ref: '#/components/schemas/UnauthenticatedError')),
