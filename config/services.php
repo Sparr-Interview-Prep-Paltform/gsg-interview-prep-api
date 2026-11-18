@@ -42,6 +42,7 @@ return [
         'interview_url' => env('INTERVIEW_PYTHON_URL'),
         'interview_answer_url' => env('INTERVIEW_ANSWER_PYTHON_URL'),
         'interview_report_url' => env('INTERVIEW_REPORT_URL'),
+        'delete_interview_url' => env('DELETE_INTERVIEW_URL'),
         'token' => env('JOB_PYTHON_TOKEN'),
 
         'connect_timeout' => 5,

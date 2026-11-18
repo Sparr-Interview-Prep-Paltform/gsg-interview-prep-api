@@ -43,7 +43,7 @@ class GenerateInterviewReport implements ShouldBeUnique, ShouldQueue
 
     public function uniqueId(): string
     {
-        return $this->reportId.':'.$this->run;
+        return $this->reportId . ':' . $this->run;
     }
 
     public function backoff(): array
@@ -102,14 +102,14 @@ class GenerateInterviewReport implements ShouldBeUnique, ShouldQueue
         }
 
         // start a transaction to update report
-        DB::transaction(function () use ($report, $aiResult): void {
+        $completed = DB::transaction(function () use ($report, $aiResult): bool {
             $lockedReport = FinalReport::query()
                 ->where('ai_run', $this->run)
                 ->lockForUpdate()
                 ->find($report->id);
 
-            if ($lockedReport->status !== ReportStatus::PROCESSING) {
-                return;
+            if ($lockedReport === null || $lockedReport->status !== ReportStatus::PROCESSING) {
+                return false;
             }
 
             $lockedReport->fill([
@@ -121,12 +121,17 @@ class GenerateInterviewReport implements ShouldBeUnique, ShouldQueue
             ]);
 
             $lockedReport->save();
+            return true;
         });
+        // Delete the interview from the Python AI service only after the report has been successfully saved.
+        if ($completed) {
+            DeleteInterviewFromAi::dispatch($report->interview_id);
+        }
     }
 
     public function middleware(): array
     {
-        return [(new WithoutOverlapping('FinalReport:'.$this->reportId))
+        return [(new WithoutOverlapping('FinalReport:' . $this->reportId))
             ->releaseAfter(5)->expireAfter($this->timeout + 5)];
     }
 
