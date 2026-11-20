@@ -16,6 +16,8 @@ class InterviewResource extends JsonResource
             'ai_failure' => AiFailure::details($this->resource, 'status'),
             'resume_id' => $this->resume_id,
             'job_description_id' => $this->job_description_id,
+            'job_description_title' => $this->jobDescription?->title,
+            'resume_title' => $this->resume?->title,
             'status' => $this->status->value,
             'total_questions' => Interview::INITIAL_QUESTION_COUNT,
             'started_at' => $this->started_at?->toISOString(),
